@@ -1,9 +1,17 @@
-Usage
-----
+
+cmakelint parses CMake files and reports style issues.
 
 cmakelint requires Python.
 
-    Syntax: cmakelint.py [--config=file] [--filter=-x,+y] <file> [file] ...
+Installation
+------------
+
+sudo pip install cmakelint
+
+Usage
+-----
+
+    Syntax: cmakelint [--config=file] [--filter=-x,+y] <file> [file] ...
     filter=-x,+y,...
       Specify a comma separated list of filters to apply
 

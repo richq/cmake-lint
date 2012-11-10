@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Copyright 2009 Richard Quirk
 
@@ -452,12 +451,9 @@ def ParseArgs(argv):
         PrintUsage('No files were specified!')
     return filenames
 
-def Main():
+def main():
     files = ParseArgs(sys.argv[1:])
 
     for filename in files:
         ProcessFile(filename)
     sys.stderr.write("Total Errors: %d\n" % _lint_state.errors)
-
-if __name__ == '__main__':
-    Main()
