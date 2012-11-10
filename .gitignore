@@ -1,1 +1,6 @@
 *.pyc
+.coverage
+nosetests.xml
+build/*
+dist/*
+cmakelint.egg-info/*
