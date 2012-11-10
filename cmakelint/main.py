@@ -15,8 +15,8 @@ import sys
 import re
 import os
 import getopt
+import cmakelint.__version__
 
-_VERSION = "cmakelint 1.2\n"
 _RE_CLEAN_COMMENT = re.compile(r'(\s*\#.*)', re.VERBOSE)
 _RE_COMMAND = re.compile(r'^\s*(\w+)(\s*)\(', re.VERBOSE)
 _RE_COMMAND_START_SPACES = re.compile(r'^\s*\w+\s*\((\s*)', re.VERBOSE)
@@ -382,7 +382,7 @@ def ProcessFile(filename):
     _package_state.Done(filename, Error)
 
 def PrintVersion():
-    sys.stderr.write(_VERSION)
+    sys.stderr.write("cmakelint %s\n" % cmakelint.__version__.VERSION)
     sys.exit(0)
 
 def PrintUsage(message):

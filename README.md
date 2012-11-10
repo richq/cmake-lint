@@ -47,3 +47,17 @@ same effect:
 
     cmakelint.py CMakeLists.txt
     cmakelint.py --filter=-whitespace/indent CMakeLists.txt
+
+Changelist
+----------
+
+1.2.01
+------
+
+- Published on pypi
+
+
+1.2
+---
+
+- Moved to github

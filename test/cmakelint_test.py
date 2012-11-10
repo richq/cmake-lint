@@ -13,7 +13,8 @@ License for the specific language governing permissions and limitations under
 the License.
 """
 import unittest
-import cmakelint.cmakelint as cmakelint
+import cmakelint.main
+import cmakelint.__version__
 import os
 
 class ErrorCollector(object):
@@ -31,40 +32,40 @@ class ErrorCollector(object):
 class CMakeLintTestBase(unittest.TestCase):
     def doTestLint(self, code, expected_message):
         errors = ErrorCollector()
-        clean_lines = cmakelint.CleansedLines([code])
-        cmakelint.ProcessLine('foo.cmake', 0, clean_lines, errors)
+        clean_lines = cmakelint.main.CleansedLines([code])
+        cmakelint.main.ProcessLine('foo.cmake', 0, clean_lines, errors)
         self.assertEquals(expected_message, errors.Results())
 
     def doTestMultiLineLint(self, code, expected_message):
         errors = ErrorCollector()
-        clean_lines = cmakelint.CleansedLines(code.split('\n'))
+        clean_lines = cmakelint.main.CleansedLines(code.split('\n'))
         for i in clean_lines.LineNumbers():
-            cmakelint.ProcessLine('foo.cmake', i, clean_lines, errors)
+            cmakelint.main.ProcessLine('foo.cmake', i, clean_lines, errors)
         self.assertEquals(expected_message, errors.Results())
 
     def doTestCheckRepeatLogic(self, code, expected_message):
         errors = ErrorCollector()
-        clean_lines = cmakelint.CleansedLines(code.split('\n'))
+        clean_lines = cmakelint.main.CleansedLines(code.split('\n'))
         for i in clean_lines.LineNumbers():
-            cmakelint.CheckRepeatLogic('foo.cmake', i, clean_lines, errors)
+            cmakelint.main.CheckRepeatLogic('foo.cmake', i, clean_lines, errors)
         self.assertEquals(expected_message, errors.Results())
 
     def doTestCheckFileName(self, filename, expected_message):
         errors = ErrorCollector()
-        cmakelint.CheckFileName(filename, errors)
+        cmakelint.main.CheckFileName(filename, errors)
         self.assertEquals(expected_message, errors.Results())
 
     def doTestCheckFindPackage(self, filename, code, expected_message):
         errors = ErrorCollector()
-        clean_lines = cmakelint.CleansedLines(code.split('\n'))
+        clean_lines = cmakelint.main.CleansedLines(code.split('\n'))
         for i in clean_lines.LineNumbers():
-            cmakelint.CheckFindPackage(filename, i, clean_lines, errors)
-        cmakelint._package_state.Done(filename, errors)
+            cmakelint.main.CheckFindPackage(filename, i, clean_lines, errors)
+        cmakelint.main._package_state.Done(filename, errors)
         self.assertEquals(expected_message, errors.Results())
 
     def doTestGetArgument(self, expected_arg, code):
-        clean_lines = cmakelint.CleansedLines(code.split('\n'))
-        self.assertEquals(expected_arg, cmakelint.GetCommandArgument(0, clean_lines))
+        clean_lines = cmakelint.main.CleansedLines(code.split('\n'))
+        self.assertEquals(expected_arg, cmakelint.main.GetCommandArgument(0, clean_lines))
 
 class CMakeLintTest(CMakeLintTestBase):
     def testLineLength(self):
@@ -79,35 +80,35 @@ class CMakeLintTest(CMakeLintTestBase):
                 'Do not mix upper and lower case commands')
 
     def testContainsCommand(self):
-        self.assertTrue(cmakelint.ContainsCommand('project()'))
-        self.assertTrue(cmakelint.ContainsCommand('project('))
-        self.assertTrue(cmakelint.ContainsCommand('project  ( '))
-        self.assertFalse(cmakelint.ContainsCommand('VERSION'))
+        self.assertTrue(cmakelint.main.ContainsCommand('project()'))
+        self.assertTrue(cmakelint.main.ContainsCommand('project('))
+        self.assertTrue(cmakelint.main.ContainsCommand('project  ( '))
+        self.assertFalse(cmakelint.main.ContainsCommand('VERSION'))
 
     def testGetCommand(self):
-        self.assertEquals('project', cmakelint.GetCommand('project()'))
-        self.assertEquals('project', cmakelint.GetCommand('project('))
-        self.assertEquals('project', cmakelint.GetCommand('project  ( '))
-        self.assertEquals('', cmakelint.GetCommand('VERSION'))
+        self.assertEquals('project', cmakelint.main.GetCommand('project()'))
+        self.assertEquals('project', cmakelint.main.GetCommand('project('))
+        self.assertEquals('project', cmakelint.main.GetCommand('project  ( '))
+        self.assertEquals('', cmakelint.main.GetCommand('VERSION'))
 
     def testIsCommandUpperCase(self):
-        self.assertTrue(cmakelint.IsCommandUpperCase('PROJECT'))
-        self.assertTrue(cmakelint.IsCommandUpperCase('CMAKE_MINIMUM_REQUIRED'))
-        self.assertFalse(cmakelint.IsCommandUpperCase('cmake_minimum_required'))
-        self.assertFalse(cmakelint.IsCommandUpperCase('project'))
-        self.assertFalse(cmakelint.IsCommandUpperCase('PrOjEct'))
+        self.assertTrue(cmakelint.main.IsCommandUpperCase('PROJECT'))
+        self.assertTrue(cmakelint.main.IsCommandUpperCase('CMAKE_MINIMUM_REQUIRED'))
+        self.assertFalse(cmakelint.main.IsCommandUpperCase('cmake_minimum_required'))
+        self.assertFalse(cmakelint.main.IsCommandUpperCase('project'))
+        self.assertFalse(cmakelint.main.IsCommandUpperCase('PrOjEct'))
 
     def testIsCommandMixedCase(self):
-        self.assertTrue(cmakelint.IsCommandMixedCase('PrOjEct'))
-        self.assertFalse(cmakelint.IsCommandMixedCase('project'))
-        self.assertFalse(cmakelint.IsCommandMixedCase('CMAKE_MINIMUM_REQUIRED'))
-        self.assertTrue(cmakelint.IsCommandMixedCase('CMAKE_MINIMUM_required'))
+        self.assertTrue(cmakelint.main.IsCommandMixedCase('PrOjEct'))
+        self.assertFalse(cmakelint.main.IsCommandMixedCase('project'))
+        self.assertFalse(cmakelint.main.IsCommandMixedCase('CMAKE_MINIMUM_REQUIRED'))
+        self.assertTrue(cmakelint.main.IsCommandMixedCase('CMAKE_MINIMUM_required'))
 
     def testCleanComment(self):
-        self.assertEquals('', cmakelint.CleanComments('# Comment to zap'))
+        self.assertEquals('', cmakelint.main.CleanComments('# Comment to zap'))
         self.assertEquals(
                 'project()',
-                cmakelint.CleanComments('project() # Comment to zap'))
+                cmakelint.main.CleanComments('project() # Comment to zap'))
 
     def testCommandSpaces(self):
         self.doTestMultiLineLint(
@@ -156,8 +157,8 @@ class CMakeLintTest(CMakeLintTestBase):
                     'File should be called CMakeLists.txt')
 
     def testIsFindPackage(self):
-        self.assertTrue(cmakelint.IsFindPackage('path/to/FindFOO.cmake'))
-        self.assertFalse(cmakelint.IsFindPackage('path/to/FeatureFOO.cmake'))
+        self.assertTrue(cmakelint.main.IsFindPackage('path/to/FindFOO.cmake'))
+        self.assertFalse(cmakelint.main.IsFindPackage('path/to/FeatureFOO.cmake'))
 
     def testCheckFindPackage(self):
         self.doTestCheckFindPackage(
@@ -192,15 +193,15 @@ class CMakeLintTest(CMakeLintTestBase):
         self.doTestGetArgument('KK', 'FIND_PACKAGE_HANDLE_STANDARD_ARGS(KK BLEUGH)')
 
     def testIsValidFile(self):
-        self.assertTrue(cmakelint.IsValidFile('CMakeLists.txt'))
-        self.assertTrue(cmakelint.IsValidFile('cmakelists.txt'))
-        self.assertTrue(cmakelint.IsValidFile('/foo/bar/baz/CMakeLists.txt'))
-        self.assertTrue(cmakelint.IsValidFile('Findkk.cmake'))
-        self.assertFalse(cmakelint.IsValidFile('foobar.h.in'))
+        self.assertTrue(cmakelint.main.IsValidFile('CMakeLists.txt'))
+        self.assertTrue(cmakelint.main.IsValidFile('cmakelists.txt'))
+        self.assertTrue(cmakelint.main.IsValidFile('/foo/bar/baz/CMakeLists.txt'))
+        self.assertTrue(cmakelint.main.IsValidFile('Findkk.cmake'))
+        self.assertFalse(cmakelint.main.IsValidFile('foobar.h.in'))
 
     def testIndent(self):
         try:
-            cmakelint._lint_state.spaces = 2
+            cmakelint.main._lint_state.spaces = 2
             self.doTestLint('no_indent(test)', '')
             self.doTestLint('  two_indent(test)', '')
             self.doTestLint('    four_indent(test)', '')
@@ -209,7 +210,7 @@ class CMakeLintTest(CMakeLintTestBase):
             self.doTestLint('   three_indent(test)',
                     'Weird indentation; use 2 spaces')
 
-            cmakelint._lint_state.spaces = 3
+            cmakelint.main._lint_state.spaces = 3
             self.doTestLint('no_indent(test)', '')
             self.doTestLint('  two_indent(test)',
                     'Weird indentation; use 3 spaces')
@@ -219,82 +220,82 @@ class CMakeLintTest(CMakeLintTestBase):
                     'Weird indentation; use 3 spaces')
             self.doTestLint('   three_indent(test)', '')
         finally:
-            cmakelint._lint_state.spaces = 2
+            cmakelint.main._lint_state.spaces = 2
 
     def testParseArgs(self):
-        old_usage = cmakelint._USAGE
-        old_version = cmakelint._VERSION
-        old_cats = cmakelint._ERROR_CATEGORIES
-        old_spaces = cmakelint._lint_state.spaces
+        old_usage = cmakelint.main._USAGE
+        old_version = cmakelint.__version__.VERSION
+        old_cats = cmakelint.main._ERROR_CATEGORIES
+        old_spaces = cmakelint.main._lint_state.spaces
         try:
-            cmakelint._USAGE = ""
-            cmakelint._ERROR_CATEGORIES = ""
-            cmakelint._VERSION = ""
-            self.assertRaises(SystemExit, cmakelint.ParseArgs, [])
-            self.assertRaises(SystemExit, cmakelint.ParseArgs, ['--help'])
-            self.assertRaises(SystemExit, cmakelint.ParseArgs, ['--bogus-option'])
-            self.assertRaises(SystemExit, cmakelint.ParseArgs, ['--filter='])
-            self.assertRaises(SystemExit, cmakelint.ParseArgs, ['--filter=foo'])
-            self.assertRaises(SystemExit, cmakelint.ParseArgs, ['--filter=+x,b,-c', 'foo.cmake'])
-            self.assertRaises(SystemExit, cmakelint.ParseArgs, ['--spaces=c', 'foo.cmake'])
-            self.assertRaises(SystemExit, cmakelint.ParseArgs, ['--version'])
-            cmakelint._lint_state.filters = []
-            self.assertEquals(['foo.cmake'], cmakelint.ParseArgs(['--filter=-whitespace', 'foo.cmake']))
-            cmakelint._lint_state.filters = []
-            self.assertEquals(['foo.cmake'], cmakelint.ParseArgs(['foo.cmake']))
+            cmakelint.main._USAGE = ""
+            cmakelint.main._ERROR_CATEGORIES = ""
+            cmakelint.main._VERSION = ""
+            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, [])
+            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--help'])
+            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--bogus-option'])
+            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter='])
+            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter=foo'])
+            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter=+x,b,-c', 'foo.cmake'])
+            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--spaces=c', 'foo.cmake'])
+            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--version'])
+            cmakelint.main._lint_state.filters = []
+            self.assertEquals(['foo.cmake'], cmakelint.main.ParseArgs(['--filter=-whitespace', 'foo.cmake']))
+            cmakelint.main._lint_state.filters = []
+            self.assertEquals(['foo.cmake'], cmakelint.main.ParseArgs(['foo.cmake']))
             filt = '-,+whitespace'
-            cmakelint._lint_state.filters = []
-            self.assertEquals(['foo.cmake'], cmakelint.ParseArgs(['--config=None', '--spaces=3', '--filter='+filt, 'foo.cmake']))
-            self.assertEquals(['-', '+whitespace'], cmakelint._lint_state.filters)
-            self.assertEquals(3, cmakelint._lint_state.spaces)
-            cmakelint._lint_state.filters = []
+            cmakelint.main._lint_state.filters = []
+            self.assertEquals(['foo.cmake'], cmakelint.main.ParseArgs(['--config=None', '--spaces=3', '--filter='+filt, 'foo.cmake']))
+            self.assertEquals(['-', '+whitespace'], cmakelint.main._lint_state.filters)
+            self.assertEquals(3, cmakelint.main._lint_state.spaces)
+            cmakelint.main._lint_state.filters = []
 
-            cmakelint.ParseArgs(['--config=./foo/bar', 'foo.cmake'])
-            self.assertEquals('./foo/bar', cmakelint._lint_state.config)
-            cmakelint.ParseArgs(['--config=None', 'foo.cmake'])
-            self.assertEquals(None, cmakelint._lint_state.config)
-            cmakelint.ParseArgs(['foo.cmake'])
-            self.assertEquals(os.environ['HOME']+os.path.sep+'.cmakelintrc', cmakelint._lint_state.config)
+            cmakelint.main.ParseArgs(['--config=./foo/bar', 'foo.cmake'])
+            self.assertEquals('./foo/bar', cmakelint.main._lint_state.config)
+            cmakelint.main.ParseArgs(['--config=None', 'foo.cmake'])
+            self.assertEquals(None, cmakelint.main._lint_state.config)
+            cmakelint.main.ParseArgs(['foo.cmake'])
+            self.assertEquals(os.environ['HOME']+os.path.sep+'.cmakelintrc', cmakelint.main._lint_state.config)
 
         finally:
-            cmakelint._USAGE = old_usage
-            cmakelint._ERROR_CATEGORIES = old_cats
-            cmakelint._VERSION = old_version
-            cmakelint._lint_state.filters = []
-            cmakelint._lint_state.spaces = old_spaces
+            cmakelint.main._USAGE = old_usage
+            cmakelint.main._ERROR_CATEGORIES = old_cats
+            cmakelint.main._VERSION = old_version
+            cmakelint.main._lint_state.filters = []
+            cmakelint.main._lint_state.spaces = old_spaces
 
     def testParseOptionsFile(self):
-        old_usage = cmakelint._USAGE
-        old_cats = cmakelint._ERROR_CATEGORIES
-        old_spaces = cmakelint._lint_state.spaces
+        old_usage = cmakelint.main._USAGE
+        old_cats = cmakelint.main._ERROR_CATEGORIES
+        old_spaces = cmakelint.main._lint_state.spaces
         try:
-            cmakelint._USAGE = ""
-            cmakelint._ERROR_CATEGORIES = ""
-            cmakelint.ParseOptionFile("""
+            cmakelint.main._USAGE = ""
+            cmakelint.main._ERROR_CATEGORIES = ""
+            cmakelint.main.ParseOptionFile("""
                     # skip comment
                     filter=-,+whitespace
                     spaces= 3
                     """.split('\n'), ignore_space=False)
-            self.assertEquals(['-', '+whitespace'], cmakelint._lint_state.filters)
-            cmakelint.ParseArgs(['--filter=+syntax','foo.cmake'])
-            self.assertEquals(['-', '+whitespace', '+syntax'], cmakelint._lint_state.filters)
-            self.assertEquals(3, cmakelint._lint_state.spaces)
+            self.assertEquals(['-', '+whitespace'], cmakelint.main._lint_state.filters)
+            cmakelint.main.ParseArgs(['--filter=+syntax','foo.cmake'])
+            self.assertEquals(['-', '+whitespace', '+syntax'], cmakelint.main._lint_state.filters)
+            self.assertEquals(3, cmakelint.main._lint_state.spaces)
 
-            cmakelint._lint_state.spaces = 2
-            cmakelint.ParseOptionFile("""
+            cmakelint.main._lint_state.spaces = 2
+            cmakelint.main.ParseOptionFile("""
                     # skip comment
                     spaces= 4
                     """.split('\n'), ignore_space=True)
-            self.assertEquals(2, cmakelint._lint_state.spaces)
+            self.assertEquals(2, cmakelint.main._lint_state.spaces)
 
-            cmakelint.ParseOptionFile("""
+            cmakelint.main.ParseOptionFile("""
                     # skip comment
                     """.split('\n'), ignore_space=False)
-            self.assertEquals(2, cmakelint._lint_state.spaces)
+            self.assertEquals(2, cmakelint.main._lint_state.spaces)
         finally:
-            cmakelint._USAGE = old_usage
-            cmakelint._ERROR_CATEGORIES = old_cats
-            cmakelint._lint_state.spaces = old_spaces
+            cmakelint.main._USAGE = old_usage
+            cmakelint.main._ERROR_CATEGORIES = old_cats
+            cmakelint.main._lint_state.spaces = old_spaces
 
 if __name__ == '__main__':
     unittest.main()
