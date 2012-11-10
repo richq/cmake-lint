@@ -11,11 +11,16 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 """
+from __future__ import print_function
 import sys
 import re
 import os
 import getopt
 import cmakelint.__version__
+
+if sys.version_info < (3,):
+    # xrange slightly faster than range on python2
+    range = xrange
 
 _RE_CLEAN_COMMENT = re.compile(r'(\s*\#.*)', re.VERBOSE)
 _RE_COMMAND = re.compile(r'^\s*(\w+)(\s*)\(', re.VERBOSE)
@@ -161,7 +166,7 @@ class CleansedLines(object):
         self.lines = [CleanComments(line) for line in lines]
 
     def LineNumbers(self):
-        return xrange(0, len(self.lines))
+        return range(0, len(self.lines))
 
 def ShouldPrintError(category):
     should_print = True
@@ -175,7 +180,7 @@ def ShouldPrintError(category):
 def Error(filename, linenumber, category, message):
     if ShouldPrintError(category):
         _lint_state.errors += 1
-        print '%s:%d: %s [%s]'%(filename, linenumber, message, category)
+        print('%s:%d: %s [%s]' % (filename, linenumber, message, category))
 
 def CheckLineLength(filename, linenumber, clean_lines, errors):
     """
@@ -361,7 +366,7 @@ def ProcessFile(filename):
     lines = ['# Lines start at 1']
     have_cr = False
     if not IsValidFile(filename):
-        print 'Ignoring file: ' + filename
+        print('Ignoring file: ' + filename)
         return
     global _package_state
     _package_state = _CMakePackageState()
@@ -442,9 +447,10 @@ def ParseArgs(argv):
     try:
         if _lint_state.config:
             try: ParseOptionFile(open(_lint_state.config, 'rU').readlines(), ignore_space)
-            except IOError: pass
+            except IOError:
+                pass
         _lint_state.SetFilters(filters)
-    except ValueError,ex:
+    except ValueError as ex:
         PrintUsage(str(ex))
 
     if not filenames:
