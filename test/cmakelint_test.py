@@ -13,7 +13,7 @@ License for the specific language governing permissions and limitations under
 the License.
 """
 import unittest
-import cmakelint
+import cmakelint.cmakelint as cmakelint
 import os
 
 class ErrorCollector(object):
@@ -29,32 +29,32 @@ class ErrorCollector(object):
         return self._errors
 
 class CMakeLintTestBase(unittest.TestCase):
-    def TestLint(self, code, expected_message):
+    def doTestLint(self, code, expected_message):
         errors = ErrorCollector()
         clean_lines = cmakelint.CleansedLines([code])
         cmakelint.ProcessLine('foo.cmake', 0, clean_lines, errors)
         self.assertEquals(expected_message, errors.Results())
 
-    def TestMultiLineLint(self, code, expected_message):
+    def doTestMultiLineLint(self, code, expected_message):
         errors = ErrorCollector()
         clean_lines = cmakelint.CleansedLines(code.split('\n'))
         for i in clean_lines.LineNumbers():
             cmakelint.ProcessLine('foo.cmake', i, clean_lines, errors)
         self.assertEquals(expected_message, errors.Results())
 
-    def TestCheckRepeatLogic(self, code, expected_message):
+    def doTestCheckRepeatLogic(self, code, expected_message):
         errors = ErrorCollector()
         clean_lines = cmakelint.CleansedLines(code.split('\n'))
         for i in clean_lines.LineNumbers():
             cmakelint.CheckRepeatLogic('foo.cmake', i, clean_lines, errors)
         self.assertEquals(expected_message, errors.Results())
 
-    def TestCheckFileName(self, filename, expected_message):
+    def doTestCheckFileName(self, filename, expected_message):
         errors = ErrorCollector()
         cmakelint.CheckFileName(filename, errors)
         self.assertEquals(expected_message, errors.Results())
 
-    def TestCheckFindPackage(self, filename, code, expected_message):
+    def doTestCheckFindPackage(self, filename, code, expected_message):
         errors = ErrorCollector()
         clean_lines = cmakelint.CleansedLines(code.split('\n'))
         for i in clean_lines.LineNumbers():
@@ -62,18 +62,18 @@ class CMakeLintTestBase(unittest.TestCase):
         cmakelint._package_state.Done(filename, errors)
         self.assertEquals(expected_message, errors.Results())
 
-    def TestGetArgument(self, expected_arg, code):
+    def doTestGetArgument(self, expected_arg, code):
         clean_lines = cmakelint.CleansedLines(code.split('\n'))
         self.assertEquals(expected_arg, cmakelint.GetCommandArgument(0, clean_lines))
 
 class CMakeLintTest(CMakeLintTestBase):
     def testLineLength(self):
-        self.TestLint(
+        self.doTestLint(
                 '# '+('o'*80),
                 'Lines should be <= 80 characters long')
 
     def testUpperAndLowerCase(self):
-        self.TestMultiLineLint(
+        self.doTestMultiLineLint(
                 '''project()
                 CMAKE_MINIMUM_REQUIRED()''',
                 'Do not mix upper and lower case commands')
@@ -110,28 +110,28 @@ class CMakeLintTest(CMakeLintTestBase):
                 cmakelint.CleanComments('project() # Comment to zap'))
 
     def testCommandSpaces(self):
-        self.TestMultiLineLint(
+        self.doTestMultiLineLint(
                 """project ()""",
                 "Extra spaces between 'project' and its ()")
 
     def testTabs(self):
-        self.TestLint('\tfoo()', 'Tab found; please use spaces')
+        self.doTestLint('\tfoo()', 'Tab found; please use spaces')
 
     def testTrailingSpaces(self):
-        self.TestLint('# test ', 'Line ends in whitespace')
-        self.TestMultiLineLint('  foo() \n  foo()\n', 'Line ends in whitespace')
-        self.TestLint('    set(var value)', '')
+        self.doTestLint('# test ', 'Line ends in whitespace')
+        self.doTestMultiLineLint('  foo() \n  foo()\n', 'Line ends in whitespace')
+        self.doTestLint('    set(var value)', '')
 
     def testCommandSpaceBalance(self):
-        self.TestMultiLineLint(
+        self.doTestMultiLineLint(
                 """project( Foo)""",
                 'Mismatching spaces inside () after command')
-        self.TestMultiLineLint(
+        self.doTestMultiLineLint(
                 """project(Foo )""",
                 'Mismatching spaces inside () after command')
 
     def testCommandNotEnded(self):
-        self.TestMultiLineLint(
+        self.doTestMultiLineLint(
                 """project(
                 Foo
                 #
@@ -139,20 +139,20 @@ class CMakeLintTest(CMakeLintTestBase):
                 'Unable to find the end of this command')
 
     def testRepeatLogicExpression(self):
-        self.TestCheckRepeatLogic('else(foo)',
+        self.doTestCheckRepeatLogic('else(foo)',
                 'Expression repeated inside else; '
                 'better to use only else()')
-        self.TestCheckRepeatLogic('ELSEIF(NOT ${VAR})', '')
-        self.TestCheckRepeatLogic('ENDMACRO( my_macro foo bar baz)',
+        self.doTestCheckRepeatLogic('ELSEIF(NOT ${VAR})', '')
+        self.doTestCheckRepeatLogic('ENDMACRO( my_macro foo bar baz)',
                 'Expression repeated inside endmacro; '
                 'better to use only ENDMACRO()')
 
     def testFindTool(self):
-        self.TestCheckFileName('path/to/FindFooBar.cmake',
+        self.doTestCheckFileName('path/to/FindFooBar.cmake',
                 'Find modules should use uppercase names; '
                 'consider using FindFOOBAR.cmake')
-        self.TestCheckFileName('CMakeLists.txt', '')
-        self.TestCheckFileName('cmakeLists.txt',
+        self.doTestCheckFileName('CMakeLists.txt', '')
+        self.doTestCheckFileName('cmakeLists.txt',
                     'File should be called CMakeLists.txt')
 
     def testIsFindPackage(self):
@@ -160,36 +160,36 @@ class CMakeLintTest(CMakeLintTestBase):
         self.assertFalse(cmakelint.IsFindPackage('path/to/FeatureFOO.cmake'))
 
     def testCheckFindPackage(self):
-        self.TestCheckFindPackage(
+        self.doTestCheckFindPackage(
                 'FindFoo.cmake',
                 '',
                 ['Package should include FindPackageHandleStandardArgs',
                 'Package should use FIND_PACKAGE_HANDLE_STANDARD_ARGS'])
-        self.TestCheckFindPackage(
+        self.doTestCheckFindPackage(
                 'FindFoo.cmake',
                 '''INCLUDE(FindPackageHandleStandardArgs)''',
                 'Package should use FIND_PACKAGE_HANDLE_STANDARD_ARGS')
-        self.TestCheckFindPackage(
+        self.doTestCheckFindPackage(
                 'FindFoo.cmake',
                 '''FIND_PACKAGE_HANDLE_STANDARD_ARGS(FOO DEFAULT_MSG)''',
                 'Package should include FindPackageHandleStandardArgs')
-        self.TestCheckFindPackage(
+        self.doTestCheckFindPackage(
                 'FindFoo.cmake',
                 '''INCLUDE(FindPackageHandleStandardArgs)
                 FIND_PACKAGE_HANDLE_STANDARD_ARGS(KK DEFAULT_MSG)''',
                 'Weird variable passed to std args, should be FOO not KK')
-        self.TestCheckFindPackage(
+        self.doTestCheckFindPackage(
                 'FindFoo.cmake',
                 '''INCLUDE(FindPackageHandleStandardArgs)
                 FIND_PACKAGE_HANDLE_STANDARD_ARGS(FOO DEFAULT_MSG)''',
                 '')
 
     def testGetCommandArgument(self):
-        self.TestGetArgument('KK',
+        self.doTestGetArgument('KK',
                 '''SET(
                 KK)''')
-        self.TestGetArgument('KK', 'Set(  KK)')
-        self.TestGetArgument('KK', 'FIND_PACKAGE_HANDLE_STANDARD_ARGS(KK BLEUGH)')
+        self.doTestGetArgument('KK', 'Set(  KK)')
+        self.doTestGetArgument('KK', 'FIND_PACKAGE_HANDLE_STANDARD_ARGS(KK BLEUGH)')
 
     def testIsValidFile(self):
         self.assertTrue(cmakelint.IsValidFile('CMakeLists.txt'))
@@ -201,23 +201,23 @@ class CMakeLintTest(CMakeLintTestBase):
     def testIndent(self):
         try:
             cmakelint._lint_state.spaces = 2
-            self.TestLint('no_indent(test)', '')
-            self.TestLint('  two_indent(test)', '')
-            self.TestLint('    four_indent(test)', '')
-            self.TestLint(' one_indent(test)',
+            self.doTestLint('no_indent(test)', '')
+            self.doTestLint('  two_indent(test)', '')
+            self.doTestLint('    four_indent(test)', '')
+            self.doTestLint(' one_indent(test)',
                     'Weird indentation; use 2 spaces')
-            self.TestLint('   three_indent(test)',
+            self.doTestLint('   three_indent(test)',
                     'Weird indentation; use 2 spaces')
 
             cmakelint._lint_state.spaces = 3
-            self.TestLint('no_indent(test)', '')
-            self.TestLint('  two_indent(test)',
+            self.doTestLint('no_indent(test)', '')
+            self.doTestLint('  two_indent(test)',
                     'Weird indentation; use 3 spaces')
-            self.TestLint('    four_indent(test)',
+            self.doTestLint('    four_indent(test)',
                     'Weird indentation; use 3 spaces')
-            self.TestLint(' one_indent(test)',
+            self.doTestLint(' one_indent(test)',
                     'Weird indentation; use 3 spaces')
-            self.TestLint('   three_indent(test)', '')
+            self.doTestLint('   three_indent(test)', '')
         finally:
             cmakelint._lint_state.spaces = 2
 
