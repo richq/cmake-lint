@@ -46,7 +46,7 @@ Syntax: cmakelint.py [--version] [--config=file] [--filter=-x,+y] [--spaces=N] <
 
     config=file
       Use the given file for configuration. By default the file
-      $HOME/.cmakelintrc is used if it exists.  Use the value "None" to use no
+      ~/.cmakelintrc is used if it exists.  Use the value "None" to use no
       configuration file (./None for a file called literally None)
       Only the option "filter=" is currently supported in this file.
 
@@ -68,7 +68,7 @@ _ERROR_CATEGORIES = """\
         whitespace/newline
         whitespace/tabs
 """
-_DEFAULT_CMAKELINTRC = os.path.join(os.environ['HOME'], '.cmakelintrc')
+_DEFAULT_CMAKELINTRC = os.path.join(os.path.expanduser('~'), '.cmakelintrc')
 
 class _CMakeLintState(object):
     def __init__(self):
