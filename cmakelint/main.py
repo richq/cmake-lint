@@ -363,6 +363,16 @@ def IsValidFile(filename):
     return filename.endswith('.cmake') or os.path.basename(filename).lower() == 'cmakelists.txt'
 
 def ProcessFile(filename):
+    # Store and then restore the filters to prevent pragmas in the file from persisting.
+    original_filters = list(_lint_state.filters)
+    try:
+        return _ProcessFile(filename)
+    finally:
+        _lint_state.filters = original_filters
+
+
+def _ProcessFile(filename):
+    linter_pragma_start = '# lint_cmake: '
     lines = ['# Lines start at 1']
     have_cr = False
     if not IsValidFile(filename):
@@ -370,14 +380,23 @@ def ProcessFile(filename):
         return
     global _package_state
     _package_state = _CMakePackageState()
-    CheckFileName(filename, Error)
     for l in open(filename).readlines():
         l = l.rstrip('\n')
         if l.endswith('\r'):
             have_cr = True
             l = l.rstrip('\r')
         lines.append(l)
+        # Check this line to see if it is a lint_cmake pragma
+        if l.startswith(linter_pragma_start):
+            try:
+                _lint_state.SetFilters(l[len(linter_pragma_start):])
+            except:
+                print("Exception occurred while processing '{0}:{1}':"
+                      .format(filename, len(lines)))
+                raise
     lines.append('# Lines end here')
+    # Check file name after reading lines incase of a # lint_cmake: pragma
+    CheckFileName(filename, Error)
     if have_cr and os.linesep != '\r\n':
         Error(filename, 0, 'whitespace/newline', 'Unexpected carriage return found; '
                 'better to use only \\n')
