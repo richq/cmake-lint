@@ -81,10 +81,13 @@ class _CMakeLintState(object):
     def SetFilters(self, filters):
         if not filters:
             return
-        if self.filters:
-            self.filters.extend(filters.split(','))
+        assert isinstance(self.filters, list)
+        if isinstance(filters, list):
+            self.filters.extend(filters)
+        elif isinstance(filters, str):
+            self.filters.extend([f.strip() for f in filters.split(',') if f])
         else:
-            self.filters = filters.split(',')
+            raise ValueError('Filters should be a list or a comma separated string')
         for f in self.filters:
             if f.startswith('-') or f.startswith('+'):
                 allowed = False
