@@ -22,7 +22,8 @@ class ErrorCollector(object):
         self._errors = []
 
     def __call__(self, unused_filename, unused_line, category, message):
-        self._errors.append(message)
+        if cmakelint.main.ShouldPrintError(category):
+            self._errors.append(message)
 
     def Results(self):
         if len(self._errors) < 2:
@@ -68,6 +69,10 @@ class CMakeLintTestBase(unittest.TestCase):
         self.assertEquals(expected_arg, cmakelint.main.GetCommandArgument(0, clean_lines))
 
 class CMakeLintTest(CMakeLintTestBase):
+
+    def setUp(self):
+        cmakelint.main._lint_state.filters = []
+
     def testLineLength(self):
         self.doTestLint(
                 '# '+('o'*80),
@@ -198,6 +203,11 @@ class CMakeLintTest(CMakeLintTestBase):
         self.assertTrue(cmakelint.main.IsValidFile('/foo/bar/baz/CMakeLists.txt'))
         self.assertTrue(cmakelint.main.IsValidFile('Findkk.cmake'))
         self.assertFalse(cmakelint.main.IsValidFile('foobar.h.in'))
+
+    def testFilterControl(self):
+        self.doTestMultiLineLint(('# lint_cmake: -whitespace/eol\n'
+                                 '  foo() \n'
+                                 '  foo()\n'), '')
 
     def testIndent(self):
         try:

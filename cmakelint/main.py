@@ -356,6 +356,7 @@ def ProcessLine(filename, linenumber, clean_lines, errors):
       clean_lines CleansedLines instance
       errors      the error handling function
     """
+    CheckLintPragma(filename, linenumber, clean_lines.raw_lines[linenumber])
     CheckLineLength(filename, linenumber, clean_lines, errors)
     CheckUpperLowerCase(filename, linenumber, clean_lines, errors)
     CheckStyle(filename, linenumber, clean_lines, errors)
@@ -373,9 +374,18 @@ def ProcessFile(filename):
     finally:
         _lint_state.filters = original_filters
 
+def CheckLintPragma(filename, linenumber, line):
+    # Check this line to see if it is a lint_cmake pragma
+    linter_pragma_start = '# lint_cmake: '
+    if line.startswith(linter_pragma_start):
+        try:
+            _lint_state.SetFilters(line[len(linter_pragma_start):])
+        except:
+            print("Exception occurred while processing '{0}:{1}':"
+                  .format(filename, linenumber))
+            raise
 
 def _ProcessFile(filename):
-    linter_pragma_start = '# lint_cmake: '
     lines = ['# Lines start at 1']
     have_cr = False
     if not IsValidFile(filename):
@@ -389,14 +399,7 @@ def _ProcessFile(filename):
             have_cr = True
             l = l.rstrip('\r')
         lines.append(l)
-        # Check this line to see if it is a lint_cmake pragma
-        if l.startswith(linter_pragma_start):
-            try:
-                _lint_state.SetFilters(l[len(linter_pragma_start):])
-            except:
-                print("Exception occurred while processing '{0}:{1}':"
-                      .format(filename, len(lines)))
-                raise
+        CheckLintPragma(filename, len(lines), l)
     lines.append('# Lines end here')
     # Check file name after reading lines incase of a # lint_cmake: pragma
     CheckFileName(filename, Error)
