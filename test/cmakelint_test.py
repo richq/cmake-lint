@@ -249,7 +249,11 @@ class CMakeLintTest(CMakeLintTestBase):
             self.assertEquals(['-', '+whitespace'], cmakelint.main._lint_state.filters)
             self.assertEquals(3, cmakelint.main._lint_state.spaces)
             cmakelint.main._lint_state.filters = []
+            filt = '-,+whitespace/eol, +whitespace/tabs'
+            self.assertEquals(['foo.cmake'], cmakelint.main.ParseArgs(['--config=None', '--spaces=3', '--filter='+filt, 'foo.cmake']))
+            self.assertEquals(['-', '+whitespace/eol', '+whitespace/tabs'], cmakelint.main._lint_state.filters)
 
+            cmakelint.main._lint_state.filters = []
             cmakelint.main.ParseArgs(['--config=./foo/bar', 'foo.cmake'])
             self.assertEquals('./foo/bar', cmakelint.main._lint_state.config)
             cmakelint.main.ParseArgs(['--config=None', 'foo.cmake'])
