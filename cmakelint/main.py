@@ -46,9 +46,10 @@ Syntax: cmakelint.py [--version] [--config=file] [--filter=-x,+y] [--spaces=N] <
 
     config=file
       Use the given file for configuration. By default the file
-      ~/.cmakelintrc is used if it exists.  Use the value "None" to use no
-      configuration file (./None for a file called literally None)
-      Only the option "filter=" is currently supported in this file.
+      ~/.config/cmakelintrc, $XDG_CONFIG_DIR/cmakelintrc or ~/.cmakelintrc is
+      used if it exists.  Use the value "None" to use no configuration file
+      (./None for a file called literally None) Only the option "filter=" is
+      currently supported in this file.
 
     version
       Show the version number and end
@@ -68,7 +69,20 @@ _ERROR_CATEGORIES = """\
         whitespace/newline
         whitespace/tabs
 """
-_DEFAULT_CMAKELINTRC = os.path.join(os.path.expanduser('~'), '.cmakelintrc')
+
+def DefaultRC():
+    """
+    Check XDG_CONFIG_DIR before ~/.cmakelintrc
+    """
+    xdg = os.path.join(os.path.expanduser('~'), '.config')
+    if 'XDG_CONFIG_DIR' in os.environ:
+        xdg = os.environ['XDG_CONFIG_DIR']
+    xdgfile = os.path.join(xdg, 'cmakelintrc')
+    if os.path.exists(xdgfile):
+        return xdgfile
+    return os.path.join(os.path.expanduser('~'), '.cmakelintrc')
+
+_DEFAULT_CMAKELINTRC = DefaultRC()
 
 class _CMakeLintState(object):
     def __init__(self):
