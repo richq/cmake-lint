@@ -1,15 +1,12 @@
-
 cmakelint parses CMake files and reports style issues.
 
 cmakelint requires Python.
 
-Installation
-------------
+## Installation
 
 sudo pip install cmakelint
 
-Usage
------
+## Usage
 
     Syntax: cmakelint [--config=file] [--filter=-x,+y] <file> [file] ...
     filter=-x,+y,...
@@ -48,16 +45,22 @@ same effect:
     cmakelint.py CMakeLists.txt
     cmakelint.py --filter=-whitespace/indent CMakeLists.txt
 
-Changelist
-----------
+## Changes
 
-1.2.01
-------
+### 1.3.1
+
+- fix version number
+
+### 1.3
+
+- individual CMake files can control filters with `# lint_cmake: pragma` comment
+- improved `SetFilters` function to allow spaces around the commas
+- use `${XDG_CONFIG_HOME}` for the cmakelintrc file, with backwards compatible check for `~/.cmakelintrc`
+
+### 1.2.01
 
 - Published on pypi
 
-
-1.2
----
+### 1.2
 
 - Moved to github
