@@ -502,3 +502,7 @@ def main():
     for filename in files:
         ProcessFile(filename)
     sys.stderr.write("Total Errors: %d\n" % _lint_state.errors)
+    if _lint_state.errors > 0:
+        return 1
+    else:
+        return 0
