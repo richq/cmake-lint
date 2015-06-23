@@ -45,7 +45,19 @@ same effect:
     cmakelint.py CMakeLists.txt
     cmakelint.py --filter=-whitespace/indent CMakeLists.txt
 
+# Output status codes
+
+The program should exit with the following status codes:
+
+* 0 if everything went fine
+* 1 if an error message was issued
+* 32 on usage error
+
 ## Changes
+
+### 1.3.x
+
+- return error code 0, 1, 32 on error
 
 ### 1.3.1
 

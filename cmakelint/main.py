@@ -432,9 +432,8 @@ def PrintVersion():
 def PrintUsage(message):
     sys.stderr.write(_USAGE)
     if message:
-        sys.exit('FATAL ERROR: '+message)
-    else:
-        sys.exit(1)
+        sys.stderr.write('FATAL ERROR: %s\n' % message)
+    sys.exit(32)
 
 def PrintCategories():
     sys.stderr.write(_ERROR_CATEGORIES)
