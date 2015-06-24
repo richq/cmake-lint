@@ -55,7 +55,7 @@ The program should exit with the following status codes:
 
 ## Changes
 
-### 1.3.x
+### 1.3.2
 
 - return error code 0, 1, 32 on error
 
