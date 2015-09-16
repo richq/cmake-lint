@@ -172,12 +172,18 @@ class _CMakePackageState(object):
 _lint_state = _CMakeLintState()
 _package_state = _CMakePackageState()
 
-def CleanComments(line):
-    if line.find('#') == -1:
-        return line
+def CleanComments(line, quote=False):
+    """
+    quote means 'was in a quote starting this line' so that
+    quoted lines can be eaten/removed.
+    """
+    if line.find('#') == -1 and line.find('"') == -1:
+        if quote:
+            return '', quote
+        else:
+            return line, quote
     # else have to check for comment
     prior = []
-    quote = False
     prev = ''
     for char in line:
         try:
@@ -194,13 +200,18 @@ def CleanComments(line):
             prev = char
 
     # rstrip removes trailing space between end of command and the comment # start
-    return ''.join(prior).rstrip()
+
+    return ''.join(prior).rstrip(), quote
 
 class CleansedLines(object):
     def __init__(self, lines):
         self.have_seen_uppercase = None
         self.raw_lines = lines
-        self.lines = [CleanComments(line) for line in lines]
+        self.lines = []
+        quote = False
+        for line in lines:
+            cleaned, quote = CleanComments(line, quote)
+            self.lines.append(cleaned)
 
     def LineNumbers(self):
         return range(0, len(self.lines))

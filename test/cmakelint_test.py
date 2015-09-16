@@ -125,10 +125,23 @@ class CMakeLintTest(CMakeLintTestBase):
         self.assertTrue(cmakelint.main.IsCommandMixedCase('CMAKE_MINIMUM_required'))
 
     def testCleanComment(self):
-        self.assertEqual('', cmakelint.main.CleanComments('# Comment to zap'))
+        self.assertEqual(('', False), cmakelint.main.CleanComments('# Comment to zap'))
         self.assertEqual(
-                'project()',
+                ('project()', False),
                 cmakelint.main.CleanComments('project() # Comment to zap'))
+
+    def testCleanCommentQuotes(self):
+        self.assertEqual(
+                ('CHECK_C_SOURCE_COMPILES("', True),
+                cmakelint.main.CleanComments('CHECK_C_SOURCE_COMPILES("'))
+
+        self.assertEqual(
+                ('', True),
+                cmakelint.main.CleanComments(' some line in a comment ', True))
+
+        self.assertEqual(
+                ('")', False),
+                cmakelint.main.CleanComments(' end of comment") ', True))
 
     def testCommandSpaces(self):
         self.doTestMultiLineLint(
@@ -241,6 +254,20 @@ class CMakeLintTest(CMakeLintTestBase):
 
     def testBackslashComment(self):
         self.doTestMultiLineLint( r'file(APPEND ${OUT} " \"") # comment\n', '')
+
+    def testFalsePositiveSourceCompiles(self):
+        self.doTestMultiLineLint((
+            'CHECK_C_SOURCE_COMPILES("\n'
+            '#include\n'
+            'void foo(void) {}\n'
+            'int main()\n'
+            '{\n'
+            'pthread_once_t once_control = PTHREAD_ONCE_INIT;\n'
+            'pthread_once(&once_control, foo);\n'
+            'return 0;\n'
+            '}"\n'
+            'HAVE_PTHREAD_ONCE_INIT\n'
+            ')\n'), '')
 
     def testIndent(self):
         try:
