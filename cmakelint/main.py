@@ -456,6 +456,15 @@ def ParseOptionFile(contents, ignore_space):
     if spaces and not ignore_space:
         _lint_state.SetSpaces(spaces)
 
+
+# See https://stackoverflow.com/a/30299145 - fixes deprecation warning in py 3.4+
+if sys.version_info[0] == 2:
+    def OpenTextFile(filename):
+        return open(filename, 'rU')
+else:
+    def OpenTextFile(filename):
+        return open(filename, 'r', newline=None)
+
 def ParseArgs(argv):
     try:
         (opts, filenames) = getopt.getopt(argv, '',
@@ -486,7 +495,8 @@ def ParseArgs(argv):
                 PrintUsage('spaces expects an integer value')
     try:
         if _lint_state.config:
-            try: ParseOptionFile(open(_lint_state.config, 'rU').readlines(), ignore_space)
+            try:
+                ParseOptionFile(OpenTextFile(_lint_state.config).readlines(), ignore_space)
             except IOError:
                 pass
         _lint_state.SetFilters(filters)
