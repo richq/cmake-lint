@@ -12,10 +12,25 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 """
+import contextlib
+import sys
 import unittest
 import cmakelint.main
 import cmakelint.__version__
 import os
+
+# stderr suppression from https://stackoverflow.com/a/1810086
+@contextlib.contextmanager
+def nostderr():
+    savestderr = sys.stderr
+    class Devnull(object):
+        def write(self, _): pass
+        def flush(self): pass
+    sys.stderr = Devnull()
+    try:
+        yield
+    finally:
+        sys.stderr = savestderr
 
 class ErrorCollector(object):
     def __init__(self):
@@ -253,14 +268,15 @@ class CMakeLintTest(CMakeLintTestBase):
             cmakelint.main._USAGE = ""
             cmakelint.main._ERROR_CATEGORIES = ""
             cmakelint.main._VERSION = ""
-            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, [])
-            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--help'])
-            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--bogus-option'])
-            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter='])
-            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter=foo'])
-            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter=+x,b,-c', 'foo.cmake'])
-            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--spaces=c', 'foo.cmake'])
-            self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--version'])
+            with nostderr():
+                self.assertRaises(SystemExit, cmakelint.main.ParseArgs, [])
+                self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--help'])
+                self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--bogus-option'])
+                self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter='])
+                self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter=foo'])
+                self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--filter=+x,b,-c', 'foo.cmake'])
+                self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--spaces=c', 'foo.cmake'])
+                self.assertRaises(SystemExit, cmakelint.main.ParseArgs, ['--version'])
             cmakelint.main._lint_state.filters = []
             self.assertEqual(['foo.cmake'], cmakelint.main.ParseArgs(['--filter=-whitespace', 'foo.cmake']))
             cmakelint.main._lint_state.filters = []
