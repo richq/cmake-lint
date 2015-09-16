@@ -236,6 +236,12 @@ class CMakeLintTest(CMakeLintTestBase):
                                   'endif()\n'),
                                  'Filter not allowed: -unknown thing')
 
+    def testNoEnd(self):
+        self.doTestMultiLineLint('file(APPEND ${OUT} "#endif${nl}")\n', '')
+
+    def testBackslashComment(self):
+        self.doTestMultiLineLint( r'file(APPEND ${OUT} " \"") # comment\n', '')
+
     def testIndent(self):
         try:
             cmakelint.main._lint_state.spaces = 2

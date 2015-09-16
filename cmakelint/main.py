@@ -22,7 +22,6 @@ if sys.version_info < (3,):
     # xrange slightly faster than range on python2
     range = xrange
 
-_RE_CLEAN_COMMENT = re.compile(r'(\s*\#.*)', re.VERBOSE)
 _RE_COMMAND = re.compile(r'^\s*(\w+)(\s*)\(', re.VERBOSE)
 _RE_COMMAND_START_SPACES = re.compile(r'^\s*\w+\s*\((\s*)', re.VERBOSE)
 _RE_COMMAND_END_SPACES = re.compile(r'(\s*)\)', re.VERBOSE)
@@ -174,7 +173,28 @@ _lint_state = _CMakeLintState()
 _package_state = _CMakePackageState()
 
 def CleanComments(line):
-    return _RE_CLEAN_COMMENT.sub('', line)
+    if line.find('#') == -1:
+        return line
+    # else have to check for comment
+    prior = []
+    quote = False
+    prev = ''
+    for char in line:
+        try:
+            if char == '"':
+                if prev != '\\':
+                    quote = not quote
+                    prior.append(char)
+                continue
+            elif char == '#' and not quote:
+                break
+            if not quote:
+                prior.append(char)
+        finally:
+            prev = char
+
+    # rstrip removes trailing space between end of command and the comment # start
+    return ''.join(prior).rstrip()
 
 class CleansedLines(object):
     def __init__(self, lines):
