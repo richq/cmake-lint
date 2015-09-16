@@ -212,7 +212,14 @@ class CMakeLintTest(CMakeLintTestBase):
     def testBadPragma(self):
         self.doTestMultiLineLint(('# lint_cmake: I am badly formed\n'
                                   'if(TRUE)\n'
-                                  'endif()\n'), '')
+                                  'endif()\n'),
+                                 'Filter should start with - or +')
+
+    def testBadPragma2(self):
+        self.doTestMultiLineLint(('# lint_cmake: -unknown thing\n'
+                                  'if(TRUE)\n'
+                                  'endif()\n'),
+                                 'Filter not allowed: -unknown thing')
 
     def testIndent(self):
         try:
