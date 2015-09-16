@@ -209,6 +209,11 @@ class CMakeLintTest(CMakeLintTestBase):
                                  '  foo() \n'
                                  '  foo()\n'), '')
 
+    def testBadPragma(self):
+        self.doTestMultiLineLint(('# lint_cmake: I am badly formed\n'
+                                  'if(TRUE)\n'
+                                  'endif()\n'), '')
+
     def testIndent(self):
         try:
             cmakelint.main._lint_state.spaces = 2
