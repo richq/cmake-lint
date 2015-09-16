@@ -55,6 +55,12 @@ The program should exit with the following status codes:
 
 ## Changes
 
+### 1.3.3
+
+- fix crash on invalid `# lint_cmake: pragma` line
+- fix deprecation warning with Python 3.4
+- fix false positive warnings related to non-CMake quoted chunks (Issue #2)
+
 ### 1.3.2
 
 - return error code 0, 1, 32 on error
