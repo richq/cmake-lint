@@ -55,6 +55,10 @@ The program should exit with the following status codes:
 
 ## Changes
 
+### 1.3.4
+
+- fix false positives in indented blocks
+
 ### 1.3.3
 
 - fix crash on invalid `# lint_cmake: pragma` line
