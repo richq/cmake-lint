@@ -95,8 +95,7 @@ class CMakeLintTest(CMakeLintTestBase):
 
     def testUpperAndLowerCase(self):
         self.doTestMultiLineLint(
-                '''project()
-                CMAKE_MINIMUM_REQUIRED()''',
+                '''project()\nCMAKE_MINIMUM_REQUIRED()\n''',
                 'Do not mix upper and lower case commands')
 
     def testContainsCommand(self):
@@ -248,6 +247,31 @@ class CMakeLintTest(CMakeLintTestBase):
                                   'if(TRUE)\n'
                                   'endif()\n'),
                                  'Filter not allowed: -unknown thing')
+
+    def testWhitespaceIssue16(self):
+        self.doTestMultiLineLint(('if(${CONDITION})\n'
+                                  '  set(VAR\n'
+                                  '      foo\n'
+                                  '      bar\n'
+                                  '  )\n'
+                                  'endif()\n'),
+                                 '')
+
+    def testWhitespaceIssue16NonRegression(self):
+        self.doTestMultiLineLint(('if(${CONDITION})\n'
+                                  '  set(VAR\n'
+                                  '      foo\n'
+                                  '      bar)\n'
+                                  'endif()\n'),
+                                 '')
+
+    def testWhitespaceIssue16FalseNegative(self):
+        self.doTestMultiLineLint(('if(${CONDITION})\n'
+                                  '  set(VAR\n'
+                                  '      foo\n'
+                                  '      bar  )\n'
+                                  'endif()\n'),
+                                 'Mismatching spaces inside () after command')
 
     def testNoEnd(self):
         self.doTestMultiLineLint('file(APPEND ${OUT} "#endif${nl}")\n', '')

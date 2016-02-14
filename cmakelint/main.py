@@ -284,6 +284,12 @@ def CheckUpperLowerCase(filename, linenumber, clean_lines, errors):
                         'readability/mixedcase',
                         'Do not mix upper and lower case commands')
 
+def GetInitialSpaces(line):
+    initial_spaces = 0
+    while initial_spaces < len(line) and line[initial_spaces] == ' ':
+        initial_spaces += 1
+    return initial_spaces
+
 def CheckCommandSpaces(filename, linenumber, clean_lines, errors):
     """
     No extra spaces between command and parenthesis
@@ -295,19 +301,26 @@ def CheckCommandSpaces(filename, linenumber, clean_lines, errors):
                 "Extra spaces between '%s' and its ()"%(match.group(1)))
     if match:
         spaces_after_open = len(_RE_COMMAND_START_SPACES.match(line).group(1))
+        initial_spaces = GetInitialSpaces(line)
         initial_linenumber = linenumber
         end = None
         while True:
             line = clean_lines.lines[linenumber]
             end = _RE_COMMAND_END_SPACES.search(line)
+            if end:
+                break
             linenumber += 1
-            if end or linenumber >= len(clean_lines.lines):
+            if linenumber >= len(clean_lines.lines):
                 break
         if linenumber == len(clean_lines.lines) and not end:
             errors(filename, initial_linenumber, 'syntax',
                     'Unable to find the end of this command')
         if end:
             spaces_before_end = len(end.group(1))
+            initial_spaces = GetInitialSpaces(line)
+            if initial_linenumber != linenumber and spaces_before_end >= initial_spaces:
+                spaces_before_end -= initial_spaces
+
             if spaces_after_open != spaces_before_end:
                 errors(filename, initial_linenumber, 'whitespace/mismatch',
                         'Mismatching spaces inside () after command')
@@ -327,10 +340,8 @@ def CheckRepeatLogic(filename, linenumber, clean_lines, errors):
             break
 
 def CheckIndent(filename, linenumber, clean_lines, errors):
-    initial_spaces = 0
     line = clean_lines.raw_lines[linenumber]
-    while initial_spaces < len(line) and line[initial_spaces] == ' ':
-        initial_spaces += 1
+    initial_spaces = GetInitialSpaces(line)
     remainder = initial_spaces % _lint_state.spaces
     if remainder != 0:
         errors(filename, linenumber, 'whitespace/indent',
