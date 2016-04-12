@@ -19,6 +19,11 @@ setup(name='cmakelint',
       version=get_version(),
       packages=['cmakelint'],
       scripts=['bin/cmakelint'],
+      entry_points={
+          'console_scripts': [
+              'cmakelint = cmakelint.main:main'
+          ]
+      },
       install_requires=[''],
       author="Richard Quirk",
       author_email="richard.quirk@gmail.com",
