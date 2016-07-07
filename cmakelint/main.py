@@ -36,7 +36,9 @@ endmacro
 endwhile
 """.split()
 _USAGE = """
-Syntax: cmakelint.py [--version] [--config=file] [--filter=-x,+y] [--spaces=N] <file> [file] ...
+Syntax: cmakelint.py [--version] [--config=file] [--filter=-x,+y] [--spaces=N]
+                     [--quiet]
+        <file> [file] ...
     filter=-x,+y,...
       Specify a comma separated list of filters to apply
 
@@ -49,6 +51,15 @@ Syntax: cmakelint.py [--version] [--config=file] [--filter=-x,+y] [--spaces=N] <
       used if it exists.  Use the value "None" to use no configuration file
       (./None for a file called literally None) Only the option "filter=" is
       currently supported in this file.
+
+    quiet makes output quiet unless errors occurs
+      Mainly used by automation tools when parsing huge amount of files.
+      In those cases actual error might get lost in the pile of other stats
+      prints.
+
+      This argument is also handy for build system integration, so it's
+      possible to add automated lint target to a project and invoke it
+      via build system and have no pollution of terminals or IDE.
 
     version
       Show the version number and end
@@ -90,6 +101,7 @@ class _CMakeLintState(object):
         self.errors = 0
         self.spaces = 2
         self.allowed_categories = _ERROR_CATEGORIES.split()
+        self.quiet = False
 
     def SetFilters(self, filters):
         if not filters:
@@ -114,6 +126,9 @@ class _CMakeLintState(object):
 
     def SetSpaces(self, spaces):
         self.spaces = int(spaces.strip())
+
+    def SetQqiet(self, quiet):
+        self.quiet = quiet
 
 class _CMakePackageState(object):
     def __init__(self):
@@ -486,6 +501,7 @@ def PrintCategories():
 def ParseOptionFile(contents, ignore_space):
     filters = None
     spaces = None
+    quiet = False
     for line in contents:
         line = line.strip()
         if not line or line.startswith('#'):
@@ -494,9 +510,12 @@ def ParseOptionFile(contents, ignore_space):
             filters = line.replace('filter=', '')
         if line.startswith('spaces='):
             spaces = line.replace('spaces=', '')
+        if line == 'quiet':
+            quiet = True
     _lint_state.SetFilters(filters)
     if spaces and not ignore_space:
         _lint_state.SetSpaces(spaces)
+    _lint_state.SetQuiet(quiet)
 
 
 # See https://stackoverflow.com/a/30299145 - fixes deprecation warning in py 3.4+
@@ -510,7 +529,8 @@ else:
 def ParseArgs(argv):
     try:
         (opts, filenames) = getopt.getopt(argv, '',
-                ['help', 'filter=', 'config=', 'spaces=', 'version'])
+                ['help', 'filter=', 'config=', 'spaces=',
+                 'quiet', 'version'])
     except getopt.GetoptError:
         PrintUsage('Invalid Arguments')
     filters = ""
@@ -535,6 +555,8 @@ def ParseArgs(argv):
                 ignore_space = True
             except:
                 PrintUsage('spaces expects an integer value')
+        elif opt == '--quiet':
+            _lint_state.quiet = True
     try:
         if _lint_state.config:
             try:
@@ -554,7 +576,8 @@ def main():
 
     for filename in files:
         ProcessFile(filename)
-    sys.stderr.write("Total Errors: %d\n" % _lint_state.errors)
+    if _lint_state.errors > 0 or not _lint_state.quiet:
+        sys.stderr.write("Total Errors: %d\n" % _lint_state.errors)
     if _lint_state.errors > 0:
         return 1
     else:
