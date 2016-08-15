@@ -37,7 +37,7 @@ endwhile
 """.split()
 _USAGE = """
 Syntax: cmakelint.py [--version] [--config=file] [--filter=-x,+y] [--spaces=N]
-                     [--quiet]
+                     [--quiet] [--linelength=digits]
         <file> [file] ...
     filter=-x,+y,...
       Specify a comma separated list of filters to apply
@@ -60,6 +60,13 @@ Syntax: cmakelint.py [--version] [--config=file] [--filter=-x,+y] [--spaces=N]
       This argument is also handy for build system integration, so it's
       possible to add automated lint target to a project and invoke it
       via build system and have no pollution of terminals or IDE.
+
+    linelength=digits
+      This is the allowed line length for the project. The default value is
+      80 characters.
+
+      Examples:
+        --linelength=120
 
     version
       Show the version number and end
@@ -100,6 +107,7 @@ class _CMakeLintState(object):
         self.config = 0
         self.errors = 0
         self.spaces = 2
+        self.linelength = 80
         self.allowed_categories = _ERROR_CATEGORIES.split()
         self.quiet = False
 
@@ -129,6 +137,9 @@ class _CMakeLintState(object):
 
     def SetQuiet(self, quiet):
         self.quiet = quiet
+
+    def SetLineLength(self, linelength):
+        self.linelength = int(linelength)
 
 class _CMakePackageState(object):
     def __init__(self):
@@ -250,12 +261,13 @@ def CheckLineLength(filename, linenumber, clean_lines, errors):
     Check for lines longer than the recommended length
     """
     line = clean_lines.raw_lines[linenumber]
-    if len(line) > 80:
+    if len(line) > _lint_state.linelength:
         return errors(
                 filename,
                 linenumber,
                 'linelength',
-                'Lines should be <= 80 characters long')
+                'Lines should be <= %d characters long' %
+                    (_lint_state.linelength))
 
 def ContainsCommand(line):
     return _RE_COMMAND.match(line)
@@ -501,6 +513,7 @@ def PrintCategories():
 def ParseOptionFile(contents, ignore_space):
     filters = None
     spaces = None
+    linelength = 80
     for line in contents:
         line = line.strip()
         if not line or line.startswith('#'):
@@ -511,9 +524,12 @@ def ParseOptionFile(contents, ignore_space):
             spaces = line.replace('spaces=', '')
         if line == 'quiet':
             _lint_state.SetQuiet(True)
+        if line.startswith('linelength='):
+            spaces = line.replace('linelength=', '')
     _lint_state.SetFilters(filters)
     if spaces and not ignore_space:
         _lint_state.SetSpaces(spaces)
+    _lint_state.SetLineLength(linelength)
 
 
 # See https://stackoverflow.com/a/30299145 - fixes deprecation warning in py 3.4+
@@ -527,7 +543,7 @@ else:
 def ParseArgs(argv):
     try:
         (opts, filenames) = getopt.getopt(argv, '',
-                ['help', 'filter=', 'config=', 'spaces=',
+                ['help', 'filter=', 'config=', 'spaces=', 'linelength=',
                  'quiet', 'version'])
     except getopt.GetoptError:
         PrintUsage('Invalid Arguments')
@@ -555,6 +571,11 @@ def ParseArgs(argv):
                 PrintUsage('spaces expects an integer value')
         elif opt == '--quiet':
             _lint_state.quiet = True
+        elif opt == '--linelength':
+            try:
+                _lint_state.SetLineLength(val)
+            except:
+                PrintUsage('line length expects an integer value')
     try:
         if _lint_state.config:
             try:
