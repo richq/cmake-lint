@@ -513,7 +513,7 @@ def PrintCategories():
 def ParseOptionFile(contents, ignore_space):
     filters = None
     spaces = None
-    linelength = 80
+    linelength = None
     for line in contents:
         line = line.strip()
         if not line or line.startswith('#'):
@@ -525,11 +525,12 @@ def ParseOptionFile(contents, ignore_space):
         if line == 'quiet':
             _lint_state.SetQuiet(True)
         if line.startswith('linelength='):
-            spaces = line.replace('linelength=', '')
+            linelength = line.replace('linelength=', '')
     _lint_state.SetFilters(filters)
     if spaces and not ignore_space:
         _lint_state.SetSpaces(spaces)
-    _lint_state.SetLineLength(linelength)
+    if linelength is not None:
+        _lint_state.SetLineLength(linelength)
 
 
 # See https://stackoverflow.com/a/30299145 - fixes deprecation warning in py 3.4+

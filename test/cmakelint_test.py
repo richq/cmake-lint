@@ -389,6 +389,12 @@ class CMakeLintTest(CMakeLintTestBase):
 
             cmakelint.main.ParseOptionFile("""
                     # skip comment
+                    linelength= 90
+                    """.split('\n'), ignore_space=True)
+            self.assertEqual(90, cmakelint.main._lint_state.linelength)
+
+            cmakelint.main.ParseOptionFile("""
+                    # skip comment
                     """.split('\n'), ignore_space=False)
             self.assertEqual(2, cmakelint.main._lint_state.spaces)
 
