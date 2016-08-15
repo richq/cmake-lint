@@ -127,7 +127,7 @@ class _CMakeLintState(object):
     def SetSpaces(self, spaces):
         self.spaces = int(spaces.strip())
 
-    def SetQqiet(self, quiet):
+    def SetQuiet(self, quiet):
         self.quiet = quiet
 
 class _CMakePackageState(object):
