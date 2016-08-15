@@ -55,6 +55,11 @@ The program should exit with the following status codes:
 
 ## Changes
 
+### 1.4
+
+- Add --quiet flag to supress "Total Errors: 0"
+- Add --linelength=N flag to allow longer default lines (default remains 80)
+
 ### 1.3.4
 
 - fix false positives in indented blocks
