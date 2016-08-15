@@ -391,6 +391,17 @@ class CMakeLintTest(CMakeLintTestBase):
                     # skip comment
                     """.split('\n'), ignore_space=False)
             self.assertEqual(2, cmakelint.main._lint_state.spaces)
+
+            cmakelint.main.ParseOptionFile("""
+                    quiet
+                    """.split('\n'), ignore_space=False)
+            self.assertTrue(cmakelint.main._lint_state.quiet)
+
+            cmakelint.main._lint_state.quiet = True
+            cmakelint.main.ParseOptionFile("""
+                    # quiet
+                    """.split('\n'), ignore_space=False)
+            self.assertTrue(cmakelint.main._lint_state.quiet)
         finally:
             cmakelint.main._USAGE = old_usage
             cmakelint.main._ERROR_CATEGORIES = old_cats
